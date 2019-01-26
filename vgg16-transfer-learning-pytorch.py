@@ -8,7 +8,7 @@
 # # Note:
 # A lot of work here is derivative. Multiple sources have been referred to come up with the architecture and the solution given here though the task as a whole has not been directly used. I will make an effort to refer to the sources these to the end.
 
-# In[46]:
+# In[1]:
 
 
 from __future__ import print_function, division
@@ -44,7 +44,7 @@ else:
 # In[53]:
 
 
-data_dir = "C:/Users/Umashanker Deekshith/Google Drive/Germany/Uni-Bonn/Semester 3/Deep Learning for VR/Exercise/DeepLearningWS/project/Deep-Learning-Project/src/images"
+data_dir = "~/imgClas/food/class10"
 TRAIN = 'train'
 TEST = 'test'
 
@@ -197,8 +197,12 @@ def get_features(ipnet, train_batches = 10, number_of_classes = 10):
         feature = ipnet(inputs)
 #         print("The shape of output is: ", feature.shape)
 #         print(labels)
-        imgfeatures.append(feature.detach().numpy().flatten())
-        imglabels.append(labels.detach().numpy())
+        if use_gpu:
+            imgfeatures.append(feature.cpu().detach().numpy().flatten())
+            imglabels.append(labels.cpu().detach().numpy())
+        else:
+            imgfeatures.append(feature.detach().numpy().flatten())
+            imglabels.append(labels.detach().numpy())
         del inputs, labels, feature
 
     return imgfeatures, imglabels
@@ -255,7 +259,8 @@ def fit_features_to_SVM_new(features, labels, train_batch_size, K=5 ):
 # In[64]:
 
 
-train_batch_size = 10
+# train_batch_size = 10
+train_batch_size = classification_size
 Class_Size = [10, 30]
 for class_size in Class_Size:
     imgfeatures_vgg, imglabels_vgg = get_features(vgg16_nc, train_batch_size, number_of_classes = class_size)
@@ -550,8 +555,8 @@ eval_model(vgg16_class_10, criterion)
 # In[ ]:
 
 
-alex_net = train_model(alex_net, criterion, optimizer_ft, exp_lr_scheduler, dataloaders, num_epochs=2)
-torch.save(alex_net.state_dict(), 'AlexNet_v2-OCT_Retina_half_dataset.pt')
+alex_net_class_10 = train_model(alex_net_class_10, criterion, optimizer_ft, exp_lr_scheduler, dataloaders, num_epochs=2)
+torch.save(alex_net_class_10.state_dict(), 'AlexNet_v2-OCT_Retina_half_dataset.pt')
 
 
 # ## Testing the trained network
@@ -560,7 +565,7 @@ torch.save(alex_net.state_dict(), 'AlexNet_v2-OCT_Retina_half_dataset.pt')
 
 
 print("Testing the trained model")
-eval_model(alex_net, criterion)
+eval_model(alex_net_class_10, criterion)
 
 
 # ## Task 3: Using label smoothing regularisation
@@ -571,7 +576,7 @@ eval_model(alex_net, criterion)
 # In[ ]:
 
 
-vgg16 = train_model(vgg16, criterion, optimizer_ft, exp_lr_scheduler, dataloaders, num_epochs=2, label_smoothing = True)
+vgg16_class_10 = train_model(vgg16_class_10, criterion, optimizer_ft, exp_lr_scheduler, dataloaders, num_epochs=2, label_smoothing = True)
 torch.save(vgg16.state_dict(), 'VGG16_task3_v2-OCT_Retina_half_dataset.pt')
 
 
@@ -579,7 +584,7 @@ torch.save(vgg16.state_dict(), 'VGG16_task3_v2-OCT_Retina_half_dataset.pt')
 
 
 print("Testing the trained model")
-eval_model(vgg16, criterion,True)
+eval_model(vgg16_class_10, criterion,True)
 
 
 # ## AlexNet with label smoothing
@@ -587,7 +592,7 @@ eval_model(vgg16, criterion,True)
 # In[ ]:
 
 
-alex_net = train_model(alex_net, criterion, optimizer_ft, exp_lr_scheduler, dataloaders, num_epochs=2, label_smoothing = True)
+alex_net_class_10 = train_model(alex_net_class_10, criterion, optimizer_ft, exp_lr_scheduler, dataloaders, num_epochs=2, label_smoothing = True)
 torch.save(alex_net.state_dict(), 'ALEXNet_Task3_v2-OCT_Retina_half_dataset.pt')
 
 
@@ -595,5 +600,5 @@ torch.save(alex_net.state_dict(), 'ALEXNet_Task3_v2-OCT_Retina_half_dataset.pt')
 
 
 print("Testing the trained model")
-eval_model(alex_net, criterion,True)
+eval_model(alex_net_class_10, criterion,True)
 
