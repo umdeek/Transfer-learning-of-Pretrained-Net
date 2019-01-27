@@ -8,7 +8,7 @@
 # # Note:
 # A lot of work here is derivative. Multiple sources have been referred to come up with the architecture and the solution given here though the task as a whole has not been directly used. I will make an effort to refer to the sources these to the end.
 
-# In[1]:
+# In[ ]:
 
 
 from __future__ import print_function, division
@@ -39,14 +39,11 @@ else:
     print("Using CPU")
 
 
+# ## Dataloader functions
 # ImageFolder loads the data directly from its path. transforms are used to then compose the same into the size needed for vggnet and alexnet. The data is then loaded based on the input size. 
 
-# In[53]:
+# In[ ]:
 
-
-data_dir = "~/imgClas/food/class10"
-TRAIN = 'train'
-TEST = 'test'
 
 def data_loader(data_dir, TRAIN, TEST, image_crop_size = 224, mini_batch_size = 1 ):
     # VGG-16 Takes 224x224 images as input, so we resize all of them
@@ -81,40 +78,29 @@ def data_loader(data_dir, TRAIN, TEST, image_crop_size = 224, mini_batch_size = 
         )
         for x in [TRAIN, TEST]
     }
+    print("Data loading complete")
     return dataloaders, image_datasets
     
-dataloaders, image_datasets = data_loader(data_dir, TRAIN, TEST, image_crop_size = 224, mini_batch_size = 1 )
+def update_details(image_datasets):
+    dataset_sizes = {x: len(image_datasets[x]) for x in [TRAIN, TEST]}
 
-dataset_sizes = {x: len(image_datasets[x]) for x in [TRAIN, TEST]}
+    for x in [TRAIN, TEST]:
+        print("Loaded {} images under {}".format(dataset_sizes[x], x), file = log)
 
-for x in [TRAIN, TEST]:
-    print("Loaded {} images under {}".format(dataset_sizes[x], x))
+    print("Classes: ", file = log)
+    class_names = image_datasets[TRAIN].classes
+    classification_size = len(image_datasets[TRAIN].classes)
+    print(image_datasets[TRAIN].classes)
+    print(classification_size)
     
-print("Classes: ")
-class_names = image_datasets[TRAIN].classes
-classification_size = len(image_datasets[TRAIN].classes)
-print(image_datasets[TRAIN].classes)
-print(classification_size)
+    return dataset_sizes, classification_size
 
 
-# ## Utils
+# ## Setting up the network
 # 
 # Some utility function to visualize the dataset and the model's predictions
 
-# In[19]:
-
-
-# Get a batch of training data
-# inputs, classes = next(iter(dataloaders[TRAIN]))
-# inputs_test, classes_test = next(iter(dataloaders[TEST]))
-# def select_dataset(dataloaders, train, test, number_of_classes):
-#     inputs, classes = next(iter(dataloaders[train]))
-#     inputs_test, classes_test = next(iter(dataloaders[test]))
-#     return inputs, classes, inputs_test, classes_test
-# inputs, classes, inputs_test, classes_test = select_dataset(dataloaders, TRAIN, TEST, number_of_classes = 10)
-
-
-# In[21]:
+# In[ ]:
 
 
 def set_up_network(net, freeze_training = True, clip_classifier = True, classification_size = 101):
@@ -150,22 +136,10 @@ def set_up_network(net, freeze_training = True, clip_classifier = True, classifi
     return network
 
 
-# In[67]:
+# ## Task 1: Update Features
+# This function updates the network output for then being able to update it for SVM layer.
 
-
-vgg16_nc = set_up_network('vgg16', freeze_training = True)
-alex_net_nc = set_up_network('alexnet', freeze_training = True)
-vgg16_class_10 = set_up_network('vgg16', freeze_training = False, clip_classifier = False, classification_size=10)
-alex_net_class_10 = set_up_network('alexnet', freeze_training = False, clip_classifier = False, classification_size = 10)
-vgg16_class_30 = set_up_network('vgg16', freeze_training = False, clip_classifier = False, classification_size=30)
-alex_net_class_30 = set_up_network('alexnet', freeze_training = False, clip_classifier = False, classification_size = 30)
-vgg16_class_100 = set_up_network('vgg16', freeze_training = False, clip_classifier = False, classification_size=100)
-alex_net_class_100 = set_up_network('alexnet', freeze_training = False, clip_classifier = False, classification_size = 100)
-
-
-# ## Task 1: For SVM on top of clipped VGG and AlexNet
-
-# In[60]:
+# In[ ]:
 
 
 def get_features(ipnet, train_batches = 10, number_of_classes = 10):
@@ -174,12 +148,12 @@ def get_features(ipnet, train_batches = 10, number_of_classes = 10):
     imglabels = []
     if classification_size < number_of_classes:
         number_of_classes = classification_size
-        print("Input size smaller at:", classification_size,". Adjusting the class to this number")
+        print("Input size smaller at:", classification_size,". Adjusting the class to this number", file = log)
     selected_classes = random.sample(range(0,classification_size), number_of_classes)
-    print("The selected classes are: ",selected_classes)
+    print("The selected classes are: ",selected_classes, file = log)
     for i, data in enumerate(dataloaders[TRAIN]):
         if i % 100 == 0:
-            print("\rTraining batch {}/{}".format(i, train_batches / 2), end='', flush=True)
+            print("\rTraining batch {}/{}".format(i, train_batches), end='')
 
         # Use half training dataset
         if i > train_batches:
@@ -204,18 +178,20 @@ def get_features(ipnet, train_batches = 10, number_of_classes = 10):
             imgfeatures.append(feature.detach().numpy().flatten())
             imglabels.append(labels.detach().numpy())
         del inputs, labels, feature
-
+    
+    print("Features Updated")
     return imgfeatures, imglabels
 
 
-# In[65]:
+# # Fit features to SVM and predict output
+
+# In[ ]:
 
 
 def fit_features_to_SVM(features, labels, train_batch_size, K=5 ):
-#     print("The shape of the class is", classes.shape)
+
     kf = sklearn.model_selection.KFold(n_splits=K)
     kf.get_n_splits(features)
-#     print("The split information is: ", kf)
     scores = []
     features = np.array(features)
     labels = np.array(labels)
@@ -224,67 +200,98 @@ def fit_features_to_SVM(features, labels, train_batch_size, K=5 ):
 
     i=0
     for train, test in kf.split(features):
-#     for train, test in kf:
-#         print(train)
-#         print(test)
         i+=1
         model = sklearn.svm.SVC(C=100)#, C=1, gamma=0)
         model.fit(features[train, :], labels[train].ravel())
         s=model.score(features[test, :], labels[test])
-        print(i,"/",K,"The score for this classification is: ", s)
+        print(i,"/",K,"The score for this classification is: ", s, file = log)
         scores.append(s)
     return np.mean(scores), np.std(scores)
 
+# This is an alternative implementation using the same thing.
 def fit_features_to_SVM_new(features, labels, train_batch_size, K=5 ):
-#     print("The shape of the class is", classes.shape)
-    # split into a training and testing set
     features = np.array(features)
     labels = np.array(labels)
     scores = []
     for i in range(K):
         x_train, x_test, y_train, y_test = train_test_split(features, labels, test_size=(1/K), random_state=42)
-#         print("The testing shape is: ", x_test.shape, y_test.shape)
-#         print("The training shape is: ", x_train.shape, y_train.shape)
         model = sklearn.svm.SVC(C=100)#, C=1, gamma=0)
         model.fit(x_train, y_train.ravel())
         s=model.score(x_test, y_test)
-        print("The score for this classification is: ", s)
+        print("The score for this classification is: ", s, file = log)
         scores.append(s)
     return np.mean(scores), np.std(scores)
 
 
-# ## VGG16 implementation with SVM as a classification layer. 
-# The batch size and other things can be classified from here.
+# ## VGG16 implementation with SVM as a classification layer. (All Updates here)
+# This updates the data, sets up the network and classifies using SVM.
 
-# In[64]:
+# In[ ]:
 
 
-# train_batch_size = 10
-train_batch_size = classification_size
-Class_Size = [10, 30]
-for class_size in Class_Size:
+data_dir_10 = "C:\DeepLearning\images\class10"  
+data_dir_30 = "C:\DeepLearning\images\class10"
+TRAIN = 'train'
+TEST = 'test'
+log = open("VGG16_Task1.txt", "w")
+# Set up the network
+vgg16_nc = set_up_network('vgg16', freeze_training = True)
+
+ImageDirectory = [data_dir_10, data_dir_30]
+for data_dir in ImageDirectory:
+    
+    # Get Data
+    dataloaders, image_datasets = data_loader(data_dir, TRAIN, TEST, image_crop_size = 224, mini_batch_size = 1 )
+    dataset_sizes, classification_size = update_details(image_datasets)
+    
+    # Update train_batch_size
+    train_batch_size = dataset_sizes[TRAIN]
+#     train_batch_size = 10
+    class_size = classification_size
+    
+    # Get the image features for the imagenet trained network.
     imgfeatures_vgg, imglabels_vgg = get_features(vgg16_nc, train_batch_size, number_of_classes = class_size)
     mean_accuracy, sd = fit_features_to_SVM(imgfeatures_vgg,
-                                            imglabels_vgg, train_batch_size, K=5 )
+                                        imglabels_vgg, train_batch_size, K=5 )
     print("The mean and standard deviation of classification for vgg 16 is: ",
-          mean_accuracy, sd, "for class size: ", class_size)
+      mean_accuracy, sd, "for class size: ", class_size, file = log)
+    del dataloaders, image_datasets, imgfeatures_vgg, imglabels_vgg
+del vgg16_nc
+log.close()
 
 
 # ## Alexnet implementation with SVM as a classification layer. 
 # The batch size and other things can be classified from here.
 
-# In[66]:
+# In[ ]:
 
 
-for class_size in Class_Size:
-    imgfeatures_an, imglabels_an = get_features(alex_net_nc, train_batch_size, class_size)
-    mean_accuracy, sd = fit_features_to_SVM(imgfeatures_an, imglabels_an, train_batch_size, K=5 )
-    print("The mean and standard deviation of classification for alexnet is: ",mean_accuracy, sd)
+log = open("AlexNet_Task1.txt", "w")
 
+# Set up the network
+alex_net_nc = set_up_network('alexnet', freeze_training = True)
 
-# vgg16 = train_model(vgg16, criterion, optimizer_ft, exp_lr_scheduler, num_epochs=2)
-torch.save(vgg16.state_dict(), 'VGG16_v2-OCT_Retina_half_dataset.pt')
-torch.save(alex_net.state_dict(), 'ALEXNET_v2-OCT_Retina_half_dataset.pt')
+ImageDirectory = [data_dir_10, data_dir_30]
+for data_dir in ImageDirectory:
+    
+    # Get Data
+    dataloaders, image_datasets = data_loader(data_dir, TRAIN, TEST, image_crop_size = 224, mini_batch_size = 1 )
+    dataset_sizes, classification_size = update_details(image_datasets)
+    
+    # Update train_batch_size
+    train_batch_size = dataset_sizes[TRAIN]
+#     train_batch_size = 10
+    class_size = classification_size
+    
+    # Get the image features for the imagenet trained network.
+    imgfeatures_alexn, imglabels_alexn = get_features(alex_net_nc, train_batch_size, number_of_classes = class_size)
+    mean_accuracy, sd = fit_features_to_SVM(imgfeatures_alexn,
+                                        imglabels_alexn, train_batch_size, K=5 )
+    print("The mean and standard deviation of classification for AlexNet is: ",
+      mean_accuracy, sd, "for class size: ", class_size, file = log)
+    del dataloaders, image_datasets, imgfeatures_alexn, imglabels_alexn
+def alex_net_nc
+log.close()
 
 
 # ## Task 2: This one trains on top of the existing pre-trained network.
@@ -292,7 +299,7 @@ torch.save(alex_net.state_dict(), 'ALEXNET_v2-OCT_Retina_half_dataset.pt')
 # ## Loss function
 # Here, based on whether label smoothing is needed or not, a different loss function is selected.
 
-# In[75]:
+# In[ ]:
 
 
 def cal_loss(pred, gold, smoothing = False):
@@ -317,31 +324,14 @@ def cal_loss(pred, gold, smoothing = False):
     return loss
 
 
-# In[76]:
-
-
-if use_gpu:
-    vgg16_class_10.cuda() #.cuda() will move everything to the GPU side
-    vgg16_class_30.cuda() #.cuda() will move everything to the GPU side
-    vgg16_class_100.cuda() #.cuda() will move everything to the GPU side
-    alex_net_class_10.cuda() #.cuda() will move everything to the GPU side
-    alex_net_class_30.cuda() #.cuda() will move everything to the GPU side
-    alex_netvgg16_class_100.cuda() #.cuda() will move everything to the GPU side
-
-# criterion = nn.CrossEntropyLoss()
-criterion = cal_loss
-optimizer_ft = optim.SGD(vgg16.parameters(), lr=0.001, momentum=0.9)
-exp_lr_scheduler = lr_scheduler.StepLR(optimizer_ft, step_size=7, gamma=0.1)
-
-
-# ## Training along with validation.
+# ## Training with cross-validation.
 # Here, a split of 80% for training and 20% for validation is done for cross validation. It otherwise follows the standard training example given in pytorch site.
 # 
 
-# In[78]:
+# In[ ]:
 
 
-def train_model(vgg, criterion, optimizer, scheduler, dataloaders, num_epochs=10, label_smoothing = False, classes = 10):
+def train_model(vgg, criterion, optimizer, scheduler, dataloaders, num_epochs=10, label_smoothing = False):
     since = time.time()
     best_model_wts = copy.deepcopy(vgg.state_dict())
     best_acc = 0.0
@@ -373,7 +363,7 @@ def train_model(vgg, criterion, optimizer, scheduler, dataloaders, num_epochs=10
         
             for i, data in enumerate(dataloaders[TRAIN]):
                 if i % 100 == 0:
-                    print("\rTraining batch {}/{}".format(i, train_batches / 2), end='', flush=True)
+                    print("\rTraining batch {}/{}".format(i, train_batches / 2), end='')
 
                 # Use half training dataset
                 if i >= train_batches / 2:
@@ -415,7 +405,7 @@ def train_model(vgg, criterion, optimizer, scheduler, dataloaders, num_epochs=10
 
             for i, data in enumerate(dataloaders[TRAIN]):
                 if i % 100 == 0:
-                    print("\rValidation batch {}/{}".format(i, val_batches), end='', flush=True)
+                    print("\rValidation batch {}/{}".format(i, val_batches), end='')
 
 #                 if i >= 1:
 #                     break
@@ -446,12 +436,12 @@ def train_model(vgg, criterion, optimizer, scheduler, dataloaders, num_epochs=10
             avg_loss_val = loss_val / (dataset_sizes[TRAIN]*0.2)
             avg_acc_val = acc_val / (dataset_sizes[TRAIN]*0.2)
 
-            print()
-            print("Epoch {} result: ".format(epoch))
-            print("Avg loss (train): {:.4f}".format(avg_loss))
-            print("Avg acc (train): {:.4f}".format(avg_acc))
-            print("Avg loss (val): {:.4f}".format(avg_loss_val))
-            print("Avg acc (val): {:.4f}".format(avg_acc_val))
+            print( file = log)
+            print("Epoch {} result: ".format(epoch), file = log)
+            print("Avg loss (train): {:.4f}".format(avg_loss), file = log)
+            print("Avg acc (train): {:.4f}".format(avg_acc), file = log)
+            print("Avg loss (val): {:.4f}".format(avg_loss_val), file = log)
+            print("Avg acc (val): {:.4f}".format(avg_acc_val), file = log)
             print('-' * 10)
             print()
 
@@ -460,18 +450,21 @@ def train_model(vgg, criterion, optimizer, scheduler, dataloaders, num_epochs=10
                 best_model_wts = copy.deepcopy(vgg.state_dict())
         
     elapsed_time = time.time() - since
-    print()
-    print("Training completed in {:.0f}m {:.0f}s".format(elapsed_time // 60, elapsed_time % 60))
-    print("Best acc: {:.4f}".format(best_acc))
+    print(file = log)
+    print("Training completed in {:.0f}m {:.0f}s".format(elapsed_time // 60, elapsed_time % 60), file = log)
+    print("Best acc: {:.4f}".format(best_acc), file = log)
     
     vgg.load_state_dict(best_model_wts)
     return vgg
 
 
-# In[79]:
+# ## Evaluating Model
+# In this step, images from validation is chosen and is used for evaluating the trained model.
+
+# In[ ]:
 
 
-def eval_model(vgg, criterion, smoothing_labels = False):
+def eval_model(vgg, criterion, label_smoothing = False):
     since = time.time()
     avg_loss = 0
     avg_acc = 0
@@ -484,7 +477,7 @@ def eval_model(vgg, criterion, smoothing_labels = False):
     
     for i, data in enumerate(dataloaders[TEST]):
         if i % 100 == 0:
-            print("\rTest batch {}/{}".format(i, test_batches), end='', flush=True)
+            print("\rTest batch {}/{}".format(i, test_batches), end='')
 #         if i >= 1:
 #             break
         vgg.train(False)
@@ -499,7 +492,7 @@ def eval_model(vgg, criterion, smoothing_labels = False):
         outputs = vgg(inputs)
 
         _, preds = torch.max(outputs.data, 1)
-        loss = criterion(outputs, labels, smoothing=smoothing_labels)
+        loss = criterion(outputs, labels, smoothing=label_smoothing)
 
 #         loss_test += loss.data[0]
         loss_test += loss.item()
@@ -513,59 +506,98 @@ def eval_model(vgg, criterion, smoothing_labels = False):
     avg_acc = acc_test / dataset_sizes[TEST]
     
     elapsed_time = time.time() - since
-    print()
-    print("Evaluation completed in {:.0f}m {:.0f}s".format(elapsed_time // 60, elapsed_time % 60))
-    print("Avg loss (test): {:.4f}".format(avg_loss))
-    print("Avg acc (test): {:.4f}".format(avg_acc))
-    print('-' * 10)
+    print(file = log)
+    print("Evaluation completed in {:.0f}m {:.0f}s".format(elapsed_time // 60, elapsed_time % 60), file = log)
+    print("Avg loss (test): {:.4f}".format(avg_loss), file = log)
+    print("Avg acc (test): {:.4f}".format(avg_acc), file = log)
+    print('-' * 10, file = log)
 
 
-# ## Training VGG model
-
-# In[80]:
+# In[ ]:
 
 
-# Number_Of_Classes = [10, 30, 100]
-# vgg16_net = [vgg16_class_10, vgg16_class_30, vgg16_class_100]
-Number_Of_Classes = [10]
-vgg16_net = [vgg16_class_10]
-for i, vgg16 in enumerate(vgg16_net):
-    if classification_size < Number_Of_Classes[i]:
-        Number_Of_Classes[i] = classification_size
-        print("Input size smaller at:", classification_size,". Adjusting the class to this number")
-    selected_classes = random.sample(range(0,classification_size), Number_Of_Classes[i])
+lr_=0.05
+momentum_=0.9
+def set_up_network_param(net_type ='vgg16', freeze_training = False, clip_classifier = False, classification_size=10):
+    net = set_up_network(net_type, freeze_training = False, clip_classifier = False, classification_size=10)
+    if use_gpu:
+        net.cuda() #.cuda() will move everything to the GPU side
+    criterion = cal_loss
+    optimizer_ft = optim.SGD(net.parameters(), lr=lr_, momentum=momentum_)
+    exp_lr_scheduler = lr_scheduler.StepLR(optimizer_ft, step_size=7, gamma=0.1)
+    return net, criterion, optimizer_ft, exp_lr_scheduler
 
-    vgg16 = train_model(vgg16, criterion, optimizer_ft, exp_lr_scheduler, dataloaders, num_epochs=2, classes = selected_classes)
-    print("Testing the trained model")
+
+# ## Transfer learning and evaluating VGG model
+
+# In[ ]:
+
+
+data_dir_10 = "C:\DeepLearning\images\class10"  
+data_dir_30 = "C:\DeepLearning\images\class10"
+data_dir_100 = "C:\DeepLearning\images\class10"
+ImageDirectory = [data_dir_10, data_dir_30, data_dir_100 ]
+
+TRAIN = 'train'
+TEST = 'test'
+
+Epochs = 2
+log = open("VGG16_Task2.txt", "w")
+for data_dir in ImageDirectory:
+    # Get Data
+    dataloaders, image_datasets = data_loader(data_dir, TRAIN, TEST, image_crop_size = 224, mini_batch_size = 10 )
+    dataset_sizes, classification_size = update_details(image_datasets)
+    
+    # Set up the network
+    vgg16, criterion, optimizer_ft, exp_lr_scheduler = set_up_network_param('vgg16', 
+                         freeze_training = False, 
+                         clip_classifier = False, 
+                         classification_size=classification_size)
+
+    # training the model
+    vgg16 = train_model(vgg16, criterion, optimizer_ft, exp_lr_scheduler, dataloaders, num_epochs=Epochs)
+    
+    # Testing the model
+    print("Testing the trained model", file = log)
     eval_model(vgg16, criterion)
-    torch.save(vgg16.state_dict(), "VGG16_v2_"+str(Number_Of_Classes[i])+"-OCT_Retina_half_dataset.pt")
+    
+    # Save the trained Model
+    torch.save(vgg16.state_dict(), "VGG16_v1_task2_size_"+str(classification_size)+".pt")
+    del vgg16, criterion, optimizer_ft, exp_lr_scheduler, dataloaders, image_datasets
+log.close()
 
 
-# ## Testing the trained network
-
-# In[ ]:
-
-
-print("Testing the trained model")
-eval_model(vgg16_class_10, criterion)
-
-
-# ## Training AlexNet
+# ## Training and evaluating AlexNet
 
 # In[ ]:
 
 
-alex_net_class_10 = train_model(alex_net_class_10, criterion, optimizer_ft, exp_lr_scheduler, dataloaders, num_epochs=2)
-torch.save(alex_net_class_10.state_dict(), 'AlexNet_v2-OCT_Retina_half_dataset.pt')
+Epochs = 2
 
+log = open("AlexNet_Task2.txt", "w")
 
-# ## Testing the trained network
+for data_dir in ImageDirectory:
+    # Get Data
+    dataloaders, image_datasets = data_loader(data_dir, TRAIN, TEST, image_crop_size = 224, mini_batch_size = 10 )
+    dataset_sizes, classification_size = update_details(image_datasets)
+    
+    # Set up the network
+    alexnet, criterion, optimizer_ft, exp_lr_scheduler = set_up_network_param('alexnet', 
+                         freeze_training = False, 
+                         clip_classifier = False, 
+                         classification_size=classification_size)
 
-# In[ ]:
-
-
-print("Testing the trained model")
-eval_model(alex_net_class_10, criterion)
+    # training the model
+    alexnet = train_model(alexnet, criterion, optimizer_ft, exp_lr_scheduler, dataloaders, num_epochs=Epochs)
+    
+    # Testing the model
+    print("Testing the trained model", file = log)
+    eval_model(alexnet, criterion)
+    
+    # Save the trained Model
+    torch.save(alexnet.state_dict(), "ALEXNET_v1_task2_size_"+str(classification_size)+".pt")
+    del alexnet, criterion, optimizer_ft, exp_lr_scheduler, dataloaders, image_datasets
+log.close()
 
 
 # ## Task 3: Using label smoothing regularisation
@@ -576,15 +608,33 @@ eval_model(alex_net_class_10, criterion)
 # In[ ]:
 
 
-vgg16_class_10 = train_model(vgg16_class_10, criterion, optimizer_ft, exp_lr_scheduler, dataloaders, num_epochs=2, label_smoothing = True)
-torch.save(vgg16.state_dict(), 'VGG16_task3_v2-OCT_Retina_half_dataset.pt')
+Epochs = 2
+log = open("VGG16_Task3.txt", "w")
+for data_dir in ImageDirectory:
+    # Get Data
+    dataloaders, image_datasets = data_loader(data_dir, TRAIN, TEST, image_crop_size = 224, mini_batch_size = 10 )
+    dataset_sizes, classification_size = update_details(image_datasets)
+    
+    # Set up the network
+    vgg16, criterion, optimizer_ft, exp_lr_scheduler = set_up_network_param('vgg16', 
+                         freeze_training = False, 
+                         clip_classifier = False, 
+                         classification_size=classification_size)
 
-
-# In[ ]:
-
-
-print("Testing the trained model")
-eval_model(vgg16_class_10, criterion,True)
+    # training the model
+    vgg16 = train_model(vgg16, 
+                        criterion, optimizer_ft, 
+                        exp_lr_scheduler, dataloaders,
+                        num_epochs=Epochs, label_smoothing = True)
+    
+    # Testing the model
+    print("Testing the trained model", file = log)
+    eval_model(vgg16, criterion, label_smoothing = True)
+    
+    # Save the trained Model
+    torch.save(vgg16.state_dict(), "VGG16_v1_task3_size_"+str(classification_size)+".pt")
+    del vgg16, criterion, optimizer_ft, exp_lr_scheduler, dataloaders, image_datasets
+log.close()
 
 
 # ## AlexNet with label smoothing
@@ -592,13 +642,33 @@ eval_model(vgg16_class_10, criterion,True)
 # In[ ]:
 
 
-alex_net_class_10 = train_model(alex_net_class_10, criterion, optimizer_ft, exp_lr_scheduler, dataloaders, num_epochs=2, label_smoothing = True)
-torch.save(alex_net.state_dict(), 'ALEXNet_Task3_v2-OCT_Retina_half_dataset.pt')
+Epochs = 2
 
+log = open("AlexNet_Task2.txt", "w")
 
-# In[ ]:
+for data_dir in ImageDirectory:
+    # Get Data
+    dataloaders, image_datasets = data_loader(data_dir, TRAIN, TEST, image_crop_size = 224, mini_batch_size = 10 )
+    dataset_sizes, classification_size = update_details(image_datasets)
+    
+    # Set up the network
+    alexnet, criterion, optimizer_ft, exp_lr_scheduler = set_up_network_param('alexnet', 
+                         freeze_training = False, 
+                         clip_classifier = False, 
+                         classification_size=classification_size)
 
-
-print("Testing the trained model")
-eval_model(alex_net_class_10, criterion,True)
+    # training the model
+    alexnet = train_model(alexnet, criterion, 
+                          optimizer_ft, exp_lr_scheduler,
+                          dataloaders, num_epochs=Epochs,
+                         label_smoothing = True)
+    
+    # Testing the model
+    print("Testing the trained model", file = log)
+    eval_model(alexnet, criterion, label_smoothing = True)
+    
+    # Save the trained Model
+    torch.save(alexnet.state_dict(), "ALEXNET_v1_task3_size_"+str(classification_size)+".pt")
+    del alexnet, criterion, optimizer_ft, exp_lr_scheduler, dataloaders, image_datasets
+log.close()
 
