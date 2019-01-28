@@ -178,7 +178,7 @@ def get_features(ipnet, train_batches = 10, number_of_classes = 10):
             imgfeatures.append(feature.detach().numpy().flatten())
             imglabels.append(labels.detach().numpy())
         del inputs, labels, feature
-    
+        torch.cuda.empty_cache()
     print("Features Updated")
     return imgfeatures, imglabels
 
@@ -236,6 +236,8 @@ TEST = 'test'
 log = open("VGG16_Task1.txt", "w")
 # Set up the network
 vgg16_nc = set_up_network('vgg16', freeze_training = True)
+if use_gpu:
+    vgg16_nc.cuda() #.cuda() will move everything to the GPU side
 
 ImageDirectory = [data_dir_10, data_dir_30]
 for data_dir in ImageDirectory:
@@ -270,6 +272,8 @@ log = open("AlexNet_Task1.txt", "w")
 
 # Set up the network
 alex_net_nc = set_up_network('alexnet', freeze_training = True)
+if use_gpu:
+    alex_net_nc.cuda() #.cuda() will move everything to the GPU side
 
 ImageDirectory = [data_dir_10, data_dir_30]
 for data_dir in ImageDirectory:
