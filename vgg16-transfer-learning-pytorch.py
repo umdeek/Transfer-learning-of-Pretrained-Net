@@ -153,7 +153,7 @@ def get_features(ipnet, train_batches = 10, number_of_classes = 10):
     print("The selected classes are: ",selected_classes, file = log)
     for i, data in enumerate(dataloaders[TRAIN]):
         if i % 100 == 0:
-            print("\rTraining batch {}/{}".format(i, train_batches), end='')
+            print("\rTraining batch {}/{}".format(i, train_batches), file=log)
 
         # Use half training dataset
         if i > train_batches:
@@ -229,8 +229,8 @@ def fit_features_to_SVM_new(features, labels, train_batch_size, K=5 ):
 # In[ ]:
 
 
-data_dir_10 = "C:\DeepLearning\images\class10"  
-data_dir_30 = "C:\DeepLearning\images\class10"
+data_dir_10 = "/home/student/meowth/imgClas/food/class10"  
+data_dir_30 = "/home/student/meowth/imgClas/food/class30"
 TRAIN = 'train'
 TEST = 'test'
 log = open("VGG16_Task1.txt", "w")
@@ -345,7 +345,7 @@ def train_model(vgg, criterion, optimizer, scheduler, dataloaders, num_epochs=10
     train_bat = np.ones((train_batches, 1)) # This is a dummy variable as sklearn changed stuff and didn't do it right.
     val_batches = 0.2*train_batches
     for epoch in range(num_epochs):
-        print("Epoch {}/{}".format(epoch, num_epochs))
+        print("Epoch {}/{}".format(epoch, num_epochs), file=log)
         print('-' * 10)
         
         loss_train = 0
@@ -405,7 +405,7 @@ def train_model(vgg, criterion, optimizer, scheduler, dataloaders, num_epochs=10
 
             for i, data in enumerate(dataloaders[TRAIN]):
                 if i % 100 == 0:
-                    print("\rValidation batch {}/{}".format(i, val_batches), end='')
+                    print("\rValidation batch {}/{}".format(i, val_batches), file=log)
 
 #                 if i >= 1:
 #                     break
@@ -477,7 +477,7 @@ def eval_model(vgg, criterion, label_smoothing = False):
     
     for i, data in enumerate(dataloaders[TEST]):
         if i % 100 == 0:
-            print("\rTest batch {}/{}".format(i, test_batches), end='')
+            print("\rTest batch {}/{}".format(i, test_batches), file=log)
 #         if i >= 1:
 #             break
         vgg.train(False)
@@ -530,12 +530,12 @@ def set_up_network_param(net_type ='vgg16', freeze_training = False, clip_classi
 
 # ## Transfer learning and evaluating VGG model
 
-# In[ ]:
+# In[1]:
 
 
-data_dir_10 = "C:\DeepLearning\images\class10"  
-data_dir_30 = "C:\DeepLearning\images\class10"
-data_dir_100 = "C:\DeepLearning\images\class10"
+data_dir_10 = "/home/student/meowth/imgClas/food/class10"  
+data_dir_30 = "/home/student/meowth/imgClas/food/class30"
+data_dir_100 = "/home/student/meowth/imgClas/food/class100"
 ImageDirectory = [data_dir_10, data_dir_30, data_dir_100 ]
 
 TRAIN = 'train'
