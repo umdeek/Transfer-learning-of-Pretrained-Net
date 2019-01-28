@@ -8,7 +8,7 @@
 # # Note:
 # A lot of work here is derivative. Multiple sources have been referred to come up with the architecture and the solution given here though the task as a whole has not been directly used. I will make an effort to refer to the sources these to the end.
 
-# In[2]:
+# In[ ]:
 
 
 from __future__ import print_function, division
@@ -42,7 +42,7 @@ else:
 # ## Dataloader functions
 # ImageFolder loads the data directly from its path. transforms are used to then compose the same into the size needed for vggnet and alexnet. The data is then loaded based on the input size. 
 
-# In[10]:
+# In[ ]:
 
 
 def data_loader(log,data_dir, TRAIN, TEST,  image_crop_size = 224, mini_batch_size = 1 ):
@@ -100,7 +100,7 @@ def update_details(log, image_datasets):
 # 
 # Some utility function to visualize the dataset and the model's predictions
 
-# In[6]:
+# In[ ]:
 
 
 def set_up_network(net, freeze_training = True, clip_classifier = True, classification_size = 101):
@@ -139,7 +139,7 @@ def set_up_network(net, freeze_training = True, clip_classifier = True, classifi
 # ## Task 1: Update Features
 # This function updates the network output for then being able to update it for SVM layer.
 
-# In[11]:
+# In[ ]:
 
 
 def get_features( log, ipnet, train_batches = 10, number_of_classes = 10 ):
@@ -185,7 +185,7 @@ def get_features( log, ipnet, train_batches = 10, number_of_classes = 10 ):
 
 # # Fit features to SVM and predict output
 
-# In[12]:
+# In[ ]:
 
 
 def fit_features_to_SVM(log, features, labels, train_batch_size,  K=5  ):
@@ -226,7 +226,7 @@ def fit_features_to_SVM_new( log,features, labels, train_batch_size, K=5  ):
 # ## VGG16 implementation with SVM as a classification layer. (All Updates here)
 # This updates the data, sets up the network and classifies using SVM.
 
-# In[14]:
+# In[ ]:
 
 
 # data_dir_10 = "/home/student/meowth/imgClas/food/class10"  
@@ -270,7 +270,7 @@ def fit_features_to_SVM_new( log,features, labels, train_batch_size, K=5  ):
 # ## Alexnet implementation with SVM as a classification layer. 
 # The batch size and other things can be classified from here.
 
-# In[15]:
+# In[ ]:
 
 
 
@@ -310,7 +310,7 @@ def fit_features_to_SVM_new( log,features, labels, train_batch_size, K=5  ):
 # ## Loss function
 # Here, based on whether label smoothing is needed or not, a different loss function is selected.
 
-# In[20]:
+# In[ ]:
 
 
 def cal_loss(pred, gold, smoothing = False):
@@ -339,7 +339,7 @@ def cal_loss(pred, gold, smoothing = False):
 # Here, a split of 80% for training and 20% for validation is done for cross validation. It otherwise follows the standard training example given in pytorch site.
 # 
 
-# In[21]:
+# In[ ]:
 
 
 def train_model(log, vgg, criterion, optimizer, scheduler, dataloaders, num_epochs=10, label_smoothing = False):
@@ -472,7 +472,7 @@ def train_model(log, vgg, criterion, optimizer, scheduler, dataloaders, num_epoc
 # ## Evaluating Model
 # In this step, images from validation is chosen and is used for evaluating the trained model.
 
-# In[22]:
+# In[ ]:
 
 
 def eval_model(log, vgg, criterion, label_smoothing = False):
@@ -524,7 +524,7 @@ def eval_model(log, vgg, criterion, label_smoothing = False):
     print('-' * 10, file = log)
 
 
-# In[23]:
+# In[ ]:
 
 
 lr_=0.05
@@ -541,7 +541,7 @@ def set_up_network_param(net_type ='vgg16', freeze_training = False, clip_classi
 
 # ## Transfer learning and evaluating VGG model
 
-# In[25]:
+# In[ ]:
 
 
 data_dir_10 = "/home/student/meowth/imgClas/food/class10"  
@@ -583,7 +583,7 @@ TEST = 'test'
 
 # ## Training and evaluating AlexNet
 
-# In[26]:
+# In[ ]:
 
 
 # Epochs = 1
@@ -643,7 +643,7 @@ for i, data_dir in enumerate(ImageDirectory):
                         num_epochs=Epochs, label_smoothing = True)
     
     # Testing the model
-    print("Testing the trained model", file = log)
+    print("Testing the trained model", file = file)
     eval_model(file, vgg16, criterion, label_smoothing = True)
     
     # Save the trained Model
@@ -654,7 +654,7 @@ for i, data_dir in enumerate(ImageDirectory):
 
 # ## AlexNet with label smoothing
 
-# In[29]:
+# In[ ]:
 
 
 Epochs = 10
