@@ -289,8 +289,7 @@ for data_dir in ImageDirectory:
                                         imglabels_alexn, train_batch_size, K=5 )
     print("The mean and standard deviation of classification for AlexNet is: ",
       mean_accuracy, sd, "for class size: ", class_size, file = log)
-    del dataloaders, image_datasets, imgfeatures_alexn, imglabels_alexn
-def alex_net_nc
+    del dataloaders, image_datasets, imgfeatures_alexn, imglabels_alexn, alex_net_nc
 log.close()
 
 
