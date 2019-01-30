@@ -607,10 +607,10 @@ def eval_model(log, vgg, criterion, label_smoothing = False):
     
 
 
-# In[ ]:
+# In[2]:
 
 
-lr_=0.05
+lr_=0.001
 momentum_=0.9
 def set_up_network_param(net_type ='vgg16', freeze_training = False, clip_classifier = False, classification_size=10):
     net = set_up_network(net_type, freeze_training = False, clip_classifier = False, classification_size=10)
