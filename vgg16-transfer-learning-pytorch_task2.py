@@ -368,7 +368,7 @@ def cal_loss(pred, gold, smoothing = False):
 # Here, a split of 80% for training and 20% for validation is done for cross validation. It otherwise follows the standard training example given in pytorch site.
 # 
 
-# In[27]:
+# In[42]:
 
 
 def train_model(log, vgg, criterion, optimizer, scheduler, dataloaders, num_epochs=10, label_smoothing = False):
@@ -400,11 +400,14 @@ def train_model(log, vgg, criterion, optimizer, scheduler, dataloaders, num_epoc
         kf = sklearn.model_selection.KFold(n_splits=K)
         kf.get_n_splits(train_bat)
 
-        labels_pred = []
-        labels_expected = []
-        
+      
         run_count = 0
         for train, test in kf.split(train_bat):
+            
+            labels_pred = []
+            labels_expected = []
+            labels_pred = np.array(labels_pred)
+            labels_expected = np.array(labels_expected)
 
             if run_count > 0:
                 break
@@ -458,18 +461,23 @@ def train_model(log, vgg, criterion, optimizer, scheduler, dataloaders, num_epoc
             # * 2 as we only used half of the dataset
             avg_loss = loss_train * 2 / (dataset_sizes[TRAIN]*0.8)
 #             avg_acc = acc_train * 2 / (dataset_sizes[TRAIN]*0.8)
-            avg_acc =  np.sum(labels_pred == labels_expected) /(dataset_sizes[TRAIN]*0.8)
+            avg_acc =  np.sum(labels_pred == labels_expected) /(len(labels_expected))
 
             vgg.train(False)
             vgg.eval()
+
+            labels_pred = []
+            labels_expected = []
+            labels_pred = np.array(labels_pred)
+            labels_expected = np.array(labels_expected)
 
             for i, data in enumerate(dataloaders[TRAIN]):
                 if i % 5000 == 0:
                     print("\rValidation batch {}/{}".format(i, val_batches), file=log)
 
-                if i >= train_batches/10:
+#                 if i >= train_batches/10:
 #                 if i >= 1:
-                    break
+#                     break
                 if i not in test:
                     continue
                 
@@ -504,7 +512,8 @@ def train_model(log, vgg, criterion, optimizer, scheduler, dataloaders, num_epoc
                 torch.cuda.empty_cache()
 
             avg_loss_val = loss_val / (dataset_sizes[TRAIN]*0.2)
-            avg_acc_val = np.sum(labels_pred == labels_expected) /(dataset_sizes[TRAIN]*0.2)
+#             avg_acc_val = np.sum(labels_pred == labels_expected) /(dataset_sizes[TRAIN]*0.2)
+            avg_acc =  np.sum(labels_pred == labels_expected) /(len(labels_expected))
 #             avg_acc_val = acc_val / (dataset_sizes[TRAIN]*0.2)
 
             print( file = log)
@@ -532,7 +541,7 @@ def train_model(log, vgg, criterion, optimizer, scheduler, dataloaders, num_epoc
 # ## Evaluating Model
 # In this step, images from validation is chosen and is used for evaluating the trained model.
 
-# In[28]:
+# In[43]:
 
 
 def eval_model(log, vgg, criterion, label_smoothing = False):
@@ -589,7 +598,7 @@ def eval_model(log, vgg, criterion, label_smoothing = False):
     print("Expected label shape",labels_expected.shape)    
     print("Predicted label shape",labels_pred.shape)    
     avg_loss = loss_test / dataset_sizes[TEST]
-    avg_acc = np.sum(labels_pred == labels_expected) / dataset_sizes[TEST]
+    avg_acc = np.sum(labels_pred == labels_expected) / len(labels_expected)
         
     elapsed_time = time.time() - since
     print(file = log)
@@ -618,7 +627,7 @@ def eval_model(log, vgg, criterion, label_smoothing = False):
     
 
 
-# In[29]:
+# In[36]:
 
 
 lr_=0.001
@@ -637,7 +646,7 @@ def set_up_network_param(net_type ='vgg16', freeze_training = False, clip_classi
     return net, criterion, optimizer_ft, exp_lr_scheduler
 
 
-# In[32]:
+# In[37]:
 
 
 # This file is common for both VGG and Alexnet
@@ -667,18 +676,18 @@ ImageDirectory = [data_dir_10G1, data_dir_30G1,
 # data_dir_10 = "C:\DeepLearning\images\class10"  
 # data_dir_30 = "C:\DeepLearning\images\class10"
 # data_dir_100 = "C:\DeepLearning\images\class10"
-
 # ImageDirectory = [data_dir_10]
+
 TRAIN = 'train'
 TEST = 'test'
 
 
 # ## Training and evaluating AlexNet
 
-# In[ ]:
+# In[41]:
 
 
-Epochs = 3
+Epochs = 5
 
 for i, data_dir in enumerate(ImageDirectory):
     file = open("AlexNet_Task2"+str(i)+"_final.txt", "w")
@@ -711,7 +720,7 @@ for i, data_dir in enumerate(ImageDirectory):
 
 
 
-Epochs = 3
+Epochs = 5
 for i, data_dir in enumerate(ImageDirectory):
     file = open("VGG16_Task2"+str(i)+".txt", "w")
     # Get Data
