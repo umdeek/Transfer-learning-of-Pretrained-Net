@@ -2,35 +2,40 @@ Loaded 7000 images under train
 Loaded 2990 images under test
 Classes: 
 Epoch 0/5
-Validation batch 0/70.0
+
+Validation batch 0/70.0
 
 Epoch 0 result: 
 Avg loss (train): 0.0134
 Avg acc (train): 0.4536
 Avg loss (val): 0.0000
 Avg acc (val): 0.0000
-Validation batch 0/70.0
+
+Validation batch 0/70.0
 
 Epoch 0 result: 
 Avg loss (train): 0.0917
 Avg acc (train): 0.5414
 Avg loss (val): 0.0000
 Avg acc (val): 0.0000
-Validation batch 0/70.0
+
+Validation batch 0/70.0
 
 Epoch 0 result: 
 Avg loss (train): 0.1680
 Avg acc (train): 0.6014
 Avg loss (val): 0.0000
 Avg acc (val): 0.0000
-Validation batch 0/70.0
+
+Validation batch 0/70.0
 
 Epoch 0 result: 
 Avg loss (train): 0.2336
 Avg acc (train): 0.6229
 Avg loss (val): 0.0000
 Avg acc (val): 0.0000
-Validation batch 0/70.0
+
+Validation batch 0/70.0
 
 Epoch 0 result: 
 Avg loss (train): 0.2949
@@ -38,35 +43,40 @@ Avg acc (train): 0.5993
 Avg loss (val): 0.0000
 Avg acc (val): 0.0000
 Epoch 1/5
-Validation batch 0/70.0
+
+Validation batch 0/70.0
 
 Epoch 1 result: 
 Avg loss (train): 0.0073
 Avg acc (train): 0.6436
 Avg loss (val): 0.0000
 Avg acc (val): 0.0000
-Validation batch 0/70.0
+
+Validation batch 0/70.0
 
 Epoch 1 result: 
 Avg loss (train): 0.0588
 Avg acc (train): 0.6879
 Avg loss (val): 0.0000
 Avg acc (val): 0.0000
-Validation batch 0/70.0
+
+Validation batch 0/70.0
 
 Epoch 1 result: 
 Avg loss (train): 0.1129
 Avg acc (train): 0.6679
 Avg loss (val): 0.0000
 Avg acc (val): 0.0000
-Validation batch 0/70.0
+
+Validation batch 0/70.0
 
 Epoch 1 result: 
 Avg loss (train): 0.1678
 Avg acc (train): 0.6236
 Avg loss (val): 0.0000
 Avg acc (val): 0.0000
-Validation batch 0/70.0
+
+Validation batch 0/70.0
 
 Epoch 1 result: 
 Avg loss (train): 0.2256
@@ -74,35 +84,40 @@ Avg acc (train): 0.7150
 Avg loss (val): 0.0000
 Avg acc (val): 0.0000
 Epoch 2/5
-Validation batch 0/70.0
+
+Validation batch 0/70.0
 
 Epoch 2 result: 
 Avg loss (train): 0.0066
 Avg acc (train): 0.6836
 Avg loss (val): 0.0000
 Avg acc (val): 0.0000
-Validation batch 0/70.0
+
+Validation batch 0/70.0
 
 Epoch 2 result: 
 Avg loss (train): 0.0533
 Avg acc (train): 0.7264
 Avg loss (val): 0.0000
 Avg acc (val): 0.0000
-Validation batch 0/70.0
+
+Validation batch 0/70.0
 
 Epoch 2 result: 
 Avg loss (train): 0.1027
 Avg acc (train): 0.7136
 Avg loss (val): 0.0000
 Avg acc (val): 0.0000
-Validation batch 0/70.0
+
+Validation batch 0/70.0
 
 Epoch 2 result: 
 Avg loss (train): 0.1518
 Avg acc (train): 0.7300
 Avg loss (val): 0.0000
 Avg acc (val): 0.0000
-Validation batch 0/70.0
+
+Validation batch 0/70.0
 
 Epoch 2 result: 
 Avg loss (train): 0.1989
@@ -110,35 +125,40 @@ Avg acc (train): 0.7000
 Avg loss (val): 0.0000
 Avg acc (val): 0.0000
 Epoch 3/5
-Validation batch 0/70.0
+
+Validation batch 0/70.0
 
 Epoch 3 result: 
 Avg loss (train): 0.0063
 Avg acc (train): 0.7321
 Avg loss (val): 0.0000
 Avg acc (val): 0.0000
-Validation batch 0/70.0
+
+Validation batch 0/70.0
 
 Epoch 3 result: 
 Avg loss (train): 0.0486
 Avg acc (train): 0.7371
 Avg loss (val): 0.0000
 Avg acc (val): 0.0000
-Validation batch 0/70.0
+
+Validation batch 0/70.0
 
 Epoch 3 result: 
 Avg loss (train): 0.0926
 Avg acc (train): 0.7400
 Avg loss (val): 0.0000
 Avg acc (val): 0.0000
-Validation batch 0/70.0
+
+Validation batch 0/70.0
 
 Epoch 3 result: 
 Avg loss (train): 0.1373
 Avg acc (train): 0.7164
 Avg loss (val): 0.0000
 Avg acc (val): 0.0000
-Validation batch 0/70.0
+
+Validation batch 0/70.0
 
 Epoch 3 result: 
 Avg loss (train): 0.1828
@@ -146,35 +166,40 @@ Avg acc (train): 0.6971
 Avg loss (val): 0.0000
 Avg acc (val): 0.0000
 Epoch 4/5
-Validation batch 0/70.0
+
+Validation batch 0/70.0
 
 Epoch 4 result: 
 Avg loss (train): 0.0058
 Avg acc (train): 0.7179
 Avg loss (val): 0.0000
 Avg acc (val): 0.0000
-Validation batch 0/70.0
+
+Validation batch 0/70.0
 
 Epoch 4 result: 
 Avg loss (train): 0.0462
 Avg acc (train): 0.7236
 Avg loss (val): 0.0000
 Avg acc (val): 0.0000
-Validation batch 0/70.0
+
+Validation batch 0/70.0
 
 Epoch 4 result: 
 Avg loss (train): 0.0929
 Avg acc (train): 0.7643
 Avg loss (val): 0.0000
 Avg acc (val): 0.0000
-Validation batch 0/70.0
+
+Validation batch 0/70.0
 
 Epoch 4 result: 
 Avg loss (train): 0.1325
 Avg acc (train): 0.7393
 Avg loss (val): 0.0000
 Avg acc (val): 0.0000
-Validation batch 0/70.0
+
+Validation batch 0/70.0
 
 Epoch 4 result: 
 Avg loss (train): 0.1753
@@ -185,8 +210,10 @@ Avg acc (val): 0.0000
 Training completed in 11m 45s
 Best acc: 0.0000
 Testing the trained model
-Test batch 0/150
-Test batch 100/150
+
+Test batch 0/150
+
+Test batch 100/150
 
 Evaluation completed in 0m 7s
 Avg loss (test): 0.1224
