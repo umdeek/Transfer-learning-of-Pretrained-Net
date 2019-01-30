@@ -8,7 +8,7 @@
 # # Note:
 # A lot of work here is derivative. Multiple sources have been referred to come up with the architecture and the solution given here though the task as a whole has not been directly used. I will make an effort to refer to the sources these to the end.
 
-# In[6]:
+# In[ ]:
 
 
 from __future__ import print_function, division
@@ -44,7 +44,7 @@ else:
 # ## Dataloader functions
 # ImageFolder loads the data directly from its path. transforms are used to then compose the same into the size needed for vggnet and alexnet. The data is then loaded based on the input size. 
 
-# In[7]:
+# In[ ]:
 
 
 def data_loader(log,data_dir, TRAIN, TEST,  image_crop_size = 224, mini_batch_size = 1 ):
@@ -102,7 +102,7 @@ def update_details(log, image_datasets):
 # 
 # Some utility function to visualize the dataset and the model's predictions
 
-# In[8]:
+# In[ ]:
 
 
 def set_up_network(net, freeze_training = True, clip_classifier = True, classification_size = 101):
@@ -141,7 +141,7 @@ def set_up_network(net, freeze_training = True, clip_classifier = True, classifi
 # ## Task 1: Update Features
 # This function updates the network output for then being able to update it for SVM layer.
 
-# In[9]:
+# In[ ]:
 
 
 def get_features( log, ipnet, train_batches = 10, number_of_classes = 10 ):
@@ -188,7 +188,7 @@ def get_features( log, ipnet, train_batches = 10, number_of_classes = 10 ):
 
 # # Fit features to SVM and predict output
 
-# In[19]:
+# In[ ]:
 
 
 
@@ -246,7 +246,7 @@ def fit_features_to_SVM_new( log,features, labels, train_batch_size, K=5  ):
     return np.mean(scores), np.std(scores)
 
 
-# In[13]:
+# In[ ]:
 
 
 ## This part is common for both VGG and Alexnet
@@ -263,7 +263,7 @@ TEST = 'test'
 # ## VGG16 implementation with SVM as a classification layer. (All Updates here)
 # This updates the data, sets up the network and classifies using SVM.
 
-# In[17]:
+# In[ ]:
 
 
 # # Set up the network
@@ -302,7 +302,7 @@ TEST = 'test'
 # ## Alexnet implementation with SVM as a classification layer. 
 # The batch size and other things can be classified from here.
 
-# In[18]:
+# In[ ]:
 
 
 # # Set up the network
@@ -340,7 +340,7 @@ TEST = 'test'
 # ## Loss function
 # Here, based on whether label smoothing is needed or not, a different loss function is selected.
 
-# In[22]:
+# In[ ]:
 
 
 def cal_loss(pred, gold, smoothing = False):
@@ -368,7 +368,7 @@ def cal_loss(pred, gold, smoothing = False):
 # Here, a split of 80% for training and 20% for validation is done for cross validation. It otherwise follows the standard training example given in pytorch site.
 # 
 
-# In[49]:
+# In[1]:
 
 
 def train_model(log, vgg, criterion, optimizer, scheduler, dataloaders, num_epochs=10, label_smoothing = False):
@@ -384,6 +384,7 @@ def train_model(log, vgg, criterion, optimizer, scheduler, dataloaders, num_epoc
     train_batches = len(dataloaders[TRAIN])
     train_bat = np.ones((train_batches, 1)) # This is a dummy variable as sklearn changed stuff and didn't do it right.
     val_batches = 0.2*train_batches
+
     for epoch in range(num_epochs):
         print("Epoch {}/{}".format(epoch, num_epochs), file=log)
         print("Epoch {}/{}".format(epoch, num_epochs), end='')
@@ -398,6 +399,9 @@ def train_model(log, vgg, criterion, optimizer, scheduler, dataloaders, num_epoc
        
         kf = sklearn.model_selection.KFold(n_splits=K)
         kf.get_n_splits(train_bat)
+
+        labels_pred = []
+        labels_expected = []
         
         run_count = 0
         for train, test in kf.split(train_bat):
@@ -434,8 +438,15 @@ def train_model(log, vgg, criterion, optimizer, scheduler, dataloaders, num_epoc
 
                 loss.backward()
                 optimizer.step()
-                loss_train += loss.item()
-#                loss_train += loss.data[0]
+#                 loss_train += loss.item()
+                if use_gpu:
+                    labels_pred = np.concatenate((labels_pred, preds.cpu()))
+                    labels_expected = np.concatenate((labels_expected, labels.cpu()))
+                else:
+                    labels_pred = np.concatenate((labels_pred, preds))
+                    labels_expected = np.concatenate((labels_expected, labels))
+
+                loss_train += loss.data[0]
                 acc_train += torch.sum(preds == labels.data)
 
                 del inputs, labels, outputs, preds
@@ -443,7 +454,8 @@ def train_model(log, vgg, criterion, optimizer, scheduler, dataloaders, num_epoc
             print()
             # * 2 as we only used half of the dataset
             avg_loss = loss_train * 2 / (dataset_sizes[TRAIN]*0.8)
-            avg_acc = acc_train * 2 / (dataset_sizes[TRAIN]*0.8)
+#             avg_acc = acc_train * 2 / (dataset_sizes[TRAIN]*0.8)
+            avg_acc =  np.sum(labels_pred == labels_expected) /(dataset_sizes[TRAIN]*0.8)
 
             vgg.train(False)
             vgg.eval()
@@ -471,15 +483,22 @@ def train_model(log, vgg, criterion, optimizer, scheduler, dataloaders, num_epoc
                 _, preds = torch.max(outputs.data, 1)
                 loss = criterion(outputs, labels)
 
-#                loss_val += loss.data[0]
-                loss_train += loss.item()
-                acc_val += torch.sum(preds == labels.data)
+                if use_gpu:
+                    labels_pred = np.concatenate((labels_pred, preds.cpu()))
+                    labels_expected = np.concatenate((labels_expected, labels.cpu()))
+                else:
+                    labels_pred = np.concatenate((labels_pred, preds))
+                    labels_expected = np.concatenate((labels_expected, labels))
+                loss_val += loss.data[0]
+#                 loss_train += loss.item()
+#                 acc_val += torch.sum(preds == labels.data)
 
                 del inputs, labels, outputs, preds
                 torch.cuda.empty_cache()
 
             avg_loss_val = loss_val / (dataset_sizes[TRAIN]*0.2)
-            avg_acc_val = acc_val / (dataset_sizes[TRAIN]*0.2)
+            avg_acc_val = np.sum(labels_pred == labels_expected) /(dataset_sizes[TRAIN]*0.2)
+#             avg_acc_val = acc_val / (dataset_sizes[TRAIN]*0.2)
 
             print( file = log)
             print("Epoch {} result: ".format(epoch), file = log)
@@ -506,7 +525,7 @@ def train_model(log, vgg, criterion, optimizer, scheduler, dataloaders, num_epoc
 # ## Evaluating Model
 # In this step, images from validation is chosen and is used for evaluating the trained model.
 
-# In[43]:
+# In[ ]:
 
 
 def eval_model(log, vgg, criterion, label_smoothing = False):
@@ -559,8 +578,8 @@ def eval_model(log, vgg, criterion, label_smoothing = False):
     print("Expected label shape",labels_expected.shape)    
     print("Predicted label shape",labels_pred.shape)    
     avg_loss = loss_test / dataset_sizes[TEST]
-    avg_acc = acc_test / dataset_sizes[TEST]
-    
+    avg_acc = np.sum(labels_pred == labels_expected) / dataset_sizes[TEST]
+        
     elapsed_time = time.time() - since
     print(file = log)
     print("Evaluation completed in {:.0f}m {:.0f}s".format(elapsed_time // 60, elapsed_time % 60), file = log)
@@ -588,7 +607,7 @@ def eval_model(log, vgg, criterion, label_smoothing = False):
     
 
 
-# In[27]:
+# In[ ]:
 
 
 lr_=0.05
@@ -604,7 +623,7 @@ def set_up_network_param(net_type ='vgg16', freeze_training = False, clip_classi
     return net, criterion, optimizer_ft, exp_lr_scheduler
 
 
-# In[52]:
+# In[ ]:
 
 
 # This file is common for both VGG and Alexnet
@@ -623,7 +642,7 @@ TEST = 'test'
 
 # ## Transfer learning and evaluating VGG model
 
-# In[44]:
+# In[ ]:
 
 
 
@@ -655,7 +674,7 @@ for i, data_dir in enumerate(ImageDirectory):
 
 # ## Training and evaluating AlexNet
 
-# In[50]:
+# In[ ]:
 
 
 Epochs = 10
