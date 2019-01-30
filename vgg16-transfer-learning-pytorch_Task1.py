@@ -8,7 +8,7 @@
 # # Note:
 # A lot of work here is derivative. Multiple sources have been referred to come up with the architecture and the solution given here though the task as a whole has not been directly used. I will make an effort to refer to the sources these to the end.
 
-# In[1]:
+# In[3]:
 
 
 from __future__ import print_function, division
@@ -28,6 +28,8 @@ import os
 import copy
 import sklearn.svm
 from sklearn.model_selection import train_test_split, KFold
+from sklearn.metrics import classification_report, confusion_matrix  
+from collections import Counter
 import random
 
 plt.ion() 
@@ -42,7 +44,7 @@ else:
 # ## Dataloader functions
 # ImageFolder loads the data directly from its path. transforms are used to then compose the same into the size needed for vggnet and alexnet. The data is then loaded based on the input size. 
 
-# In[9]:
+# In[4]:
 
 
 def data_loader(log,data_dir, TRAIN, TEST,  image_crop_size = 224, mini_batch_size = 1 ):
@@ -73,14 +75,14 @@ def data_loader(log,data_dir, TRAIN, TEST,  image_crop_size = 224, mini_batch_si
 
     dataloaders = {
         x: torch.utils.data.DataLoader(
-            image_datasets[x], batch_size=1,
-            shuffle=True, num_workers=1
+            image_datasets[x], batch_size=mini_batch_size,
+            shuffle=True, num_workers=4
         )
         for x in [TRAIN, TEST]
     }
     print("Data loading complete")
     return dataloaders, image_datasets
-    
+
 def update_details(log, image_datasets):
     dataset_sizes = {x: len(image_datasets[x]) for x in [TRAIN, TEST]}
 
@@ -100,7 +102,7 @@ def update_details(log, image_datasets):
 # 
 # Some utility function to visualize the dataset and the model's predictions
 
-# In[3]:
+# In[5]:
 
 
 def set_up_network(net, freeze_training = True, clip_classifier = True, classification_size = 101):
@@ -139,7 +141,7 @@ def set_up_network(net, freeze_training = True, clip_classifier = True, classifi
 # ## Task 1: Update Features
 # This function updates the network output for then being able to update it for SVM layer.
 
-# In[4]:
+# In[ ]:
 
 
 def get_features( log, ipnet, train_batches = 10, number_of_classes = 10 ):
@@ -186,11 +188,9 @@ def get_features( log, ipnet, train_batches = 10, number_of_classes = 10 ):
 
 # # Fit features to SVM and predict output
 
-# In[34]:
+# In[ ]:
 
 
-from sklearn.metrics import classification_report, confusion_matrix  
-from collections import Counter
 
 def fit_features_to_SVM(log, class_names, features, labels, train_batch_size,  K=5  ):
 
@@ -219,7 +219,11 @@ def fit_features_to_SVM(log, class_names, features, labels, train_batch_size,  K
         print("List of classification Accuracy", file=log)
         data = Counter(y_label[y_label==out_predict])
         stat = data.most_common()
+        stat = np.array(stat)
         print(stat, file=log)   # Returns all unique items and their counts
+        
+        print(" The best classification accuracy is: ", stat[0,1]/np.sum(y_label[y_label==stat[0,1]]), file=log)
+        print(" The worst classification accuracy is: ", stat[-1,1]/np.sum(y_label[y_label==stat[-1,1]]), file=log)
         
         s=model.score(features[test, :], labels[test])
         print(i,"/",K,"The score for this classification is: ", s, file = log)
@@ -242,15 +246,38 @@ def fit_features_to_SVM_new( log,features, labels, train_batch_size, K=5  ):
     return np.mean(scores), np.std(scores)
 
 
-# In[ ]:
+# In[25]:
 
 
-## This part is common for both VGG and Alexnet
-data_dir_10 = "/home/student/ekans/ProjectClass/class10"  
-data_dir_30 = "/home/student/ekans/ProjectClass/class30"
+# This file is common for both VGG and Alexnet
+
+data_dir_10G1 = "/home/student/meowth/imgClas/food/class10"  
+data_dir_10G2 = "/home/student/meowth/imgClas/food/group_2_10"  
+data_dir_10G3 = "/home/student/meowth/imgClas/food/group_3_10"  
+data_dir_10G4 = "/home/student/meowth/imgClas/food/group_4_10"  
+data_dir_10G5 = "/home/student/meowth/imgClas/food/group_5_10"  
+
+data_dir_30G1 = "/home/student/meowth/imgClas/food/class30"
+data_dir_30G2 = "/home/student/meowth/imgClas/food/group_2_30"
+data_dir_30G3 = "/home/student/meowth/imgClas/food/group_3_30"
+data_dir_30G4 = "/home/student/meowth/imgClas/food/group_4_30"
+data_dir_30G5 = "/home/student/meowth/imgClas/food/group_5_30"
+
+# data_dir_10G1 = "/home/student/meowth/imgClas/food/class10"  
+# data_dir_30G1 = "/home/student/meowth/imgClas/food/class30"
+# data_dir_100 = "/home/student/meowth/imgClas/food/class100"
+# ImageDirectory = [data_dir_10G1, data_dir_30G1, data_dir_100]
+ImageDirectory = [data_dir_10G1, data_dir_30G1,
+                  data_dir_10G2, data_dir_30G2,
+                  data_dir_10G3, data_dir_30G3,
+                  data_dir_10G4, data_dir_30G4,
+                  data_dir_10G5, data_dir_30G5]
+
 # data_dir_10 = "C:\DeepLearning\images\class10"  
 # data_dir_30 = "C:\DeepLearning\images\class10"
-ImageDirectory = [data_dir_10, data_dir_30]
+# data_dir_100 = "C:\DeepLearning\images\class10"
+# ImageDirectory = [data_dir_10]
+
 TRAIN = 'train'
 TEST = 'test'
 
@@ -258,7 +285,7 @@ TEST = 'test'
 # ## VGG16 implementation with SVM as a classification layer. (All Updates here)
 # This updates the data, sets up the network and classifies using SVM.
 
-# In[31]:
+# In[ ]:
 
 
 # Set up the network
@@ -267,7 +294,7 @@ if use_gpu:
     vgg16_nc.cuda() #.cuda() will move everything to the GPU side
 
 for i, data_dir in enumerate(ImageDirectory):
-    file = open("VGG16_Task1"+str(i)+".txt", "w")
+    file = open("VGG16_Task1"+str(i)+"_final.txt", "w")
 
     # Get Data
     dataloaders, image_datasets = data_loader(file,data_dir, TRAIN, TEST, 
@@ -276,14 +303,14 @@ for i, data_dir in enumerate(ImageDirectory):
     
     # Update train_batch_size
     train_batch_size = dataset_sizes[TRAIN]
-#     train_batch_size = 50
+    train_batch_size = 50
     class_size = classification_size
     
     # Get the image features for the imagenet trained network.
     print("Getting features")
     imgfeatures_vgg, imglabels_vgg = get_features(file, vgg16_nc, train_batch_size,
                                                   number_of_classes = class_size)
-    print("Filling features to svm")
+    print("Fitting features to svm")
     mean_accuracy, sd = fit_features_to_SVM(file, class_names, imgfeatures_vgg,
                                         imglabels_vgg, train_batch_size, K=5)
     
@@ -297,7 +324,7 @@ del vgg16_nc
 # ## Alexnet implementation with SVM as a classification layer. 
 # The batch size and other things can be classified from here.
 
-# In[32]:
+# In[ ]:
 
 
 # Set up the network
@@ -306,7 +333,7 @@ if use_gpu:
     alex_net_nc.cuda() #.cuda() will move everything to the GPU side
 
 for i, data_dir in enumerate(ImageDirectory):
-    file = open("AlexNet_Task1"+str(i)+".txt", "w")
+    file = open("AlexNet_Task1"+str(i)+"_final.txt", "w")
     
     # Get Data
     dataloaders, image_datasets = data_loader(file, data_dir, TRAIN, TEST, 
@@ -315,7 +342,7 @@ for i, data_dir in enumerate(ImageDirectory):
     
     # Update train_batch_size
     train_batch_size = dataset_sizes[TRAIN]
-#     train_batch_size = 100
+    train_batch_size = 100
     class_size = classification_size
     
     # Get the image features for the imagenet trained network.
@@ -335,7 +362,7 @@ del alex_net_nc
 # ## Loss function
 # Here, based on whether label smoothing is needed or not, a different loss function is selected.
 
-# In[ ]:
+# In[6]:
 
 
 def cal_loss(pred, gold, smoothing = False):
@@ -363,7 +390,7 @@ def cal_loss(pred, gold, smoothing = False):
 # Here, a split of 80% for training and 20% for validation is done for cross validation. It otherwise follows the standard training example given in pytorch site.
 # 
 
-# In[ ]:
+# In[31]:
 
 
 def train_model(log, vgg, criterion, optimizer, scheduler, dataloaders, num_epochs=10, label_smoothing = False):
@@ -379,8 +406,10 @@ def train_model(log, vgg, criterion, optimizer, scheduler, dataloaders, num_epoc
     train_batches = len(dataloaders[TRAIN])
     train_bat = np.ones((train_batches, 1)) # This is a dummy variable as sklearn changed stuff and didn't do it right.
     val_batches = 0.2*train_batches
+
     for epoch in range(num_epochs):
         print("Epoch {}/{}".format(epoch, num_epochs), file=log)
+        print("Epoch {}/{}".format(epoch, num_epochs), end='')
         print('-' * 10)
         
         loss_train = 0
@@ -393,16 +422,27 @@ def train_model(log, vgg, criterion, optimizer, scheduler, dataloaders, num_epoc
         kf = sklearn.model_selection.KFold(n_splits=K)
         kf.get_n_splits(train_bat)
 
-    
+      
+        run_count = 0
         for train, test in kf.split(train_bat):
-        
+            
+            labels_pred = []
+            labels_expected = []
+            labels_pred = np.array(labels_pred)
+            labels_expected = np.array(labels_expected)
+
+            if run_count > 0:
+                break
+#             run_count = 1 # If commented skips cross validation
+            
             for i, data in enumerate(dataloaders[TRAIN]):
                 if i % 100 == 0:
                     print("\rTraining batch {}/{}".format(i, train_batches / 2), end='')
+                
 
                 # Use half training dataset
-                if i >= train_batches / 2:
-#                 if i >= 1:
+#                 if i >= train_batches/4:
+                if i >= 1:
                     break
                 
                 if i not in train:
@@ -420,12 +460,22 @@ def train_model(log, vgg, criterion, optimizer, scheduler, dataloaders, num_epoc
                 outputs = vgg(inputs)
 
                 _, preds = torch.max(outputs.data, 1)
-                loss = criterion(outputs, labels)
+                if label_smoothing:
+                    loss = criterion(outputs, labels, True)                
+                else:
+                    loss = criterion(outputs, labels)
 
                 loss.backward()
                 optimizer.step()
-#                 loss_train += loss.item()
-                loss_train += loss.data[0]
+                loss_train += loss.item()
+                if use_gpu:
+                    labels_pred = np.concatenate((labels_pred, preds.cpu()))
+                    labels_expected = np.concatenate((labels_expected, labels.cpu()))
+                else:
+                    labels_pred = np.concatenate((labels_pred, preds))
+                    labels_expected = np.concatenate((labels_expected, labels))
+
+#                 loss_train += loss.data[0]
                 acc_train += torch.sum(preds == labels.data)
 
                 del inputs, labels, outputs, preds
@@ -433,17 +483,24 @@ def train_model(log, vgg, criterion, optimizer, scheduler, dataloaders, num_epoc
             print()
             # * 2 as we only used half of the dataset
             avg_loss = loss_train * 2 / (dataset_sizes[TRAIN]*0.8)
-            avg_acc = acc_train * 2 / (dataset_sizes[TRAIN]*0.8)
+#             avg_acc = acc_train * 2 / (dataset_sizes[TRAIN]*0.8)
+            avg_acc =  np.sum(labels_pred == labels_expected) /(len(labels_expected))
 
             vgg.train(False)
             vgg.eval()
+
+            labels_pred = []
+            labels_expected = []
+            labels_pred = np.array(labels_pred)
+            labels_expected = np.array(labels_expected)
 
             for i, data in enumerate(dataloaders[TRAIN]):
                 if i % 5000 == 0:
                     print("\rValidation batch {}/{}".format(i, val_batches), file=log)
 
-#                 if i >= 1:
-#                     break
+#                 if i >= train_batches/10:
+                if i >= 1:
+                    break
                 if i not in test:
                     continue
                 
@@ -459,17 +516,28 @@ def train_model(log, vgg, criterion, optimizer, scheduler, dataloaders, num_epoc
                 outputs = vgg(inputs)
 
                 _, preds = torch.max(outputs.data, 1)
-                loss = criterion(outputs, labels)
+                if label_smoothing:
+                    loss = criterion(outputs, labels, True)                
+                else:
+                    loss = criterion(outputs, labels)
 
-                loss_val += loss.data[0]
-#                 loss_train += loss.item()
-                acc_val += torch.sum(preds == labels.data)
+                if use_gpu:
+                    labels_pred = np.concatenate((labels_pred, preds.cpu()))
+                    labels_expected = np.concatenate((labels_expected, labels.cpu()))
+                else:
+                    labels_pred = np.concatenate((labels_pred, preds))
+                    labels_expected = np.concatenate((labels_expected, labels))
+#                 loss_val += loss.data[0]
+                loss_train += loss.item()
+#                 acc_val += torch.sum(preds == labels.data)
 
                 del inputs, labels, outputs, preds
                 torch.cuda.empty_cache()
 
             avg_loss_val = loss_val / (dataset_sizes[TRAIN]*0.2)
-            avg_acc_val = acc_val / (dataset_sizes[TRAIN]*0.2)
+#             avg_acc_val = np.sum(labels_pred == labels_expected) /(dataset_sizes[TRAIN]*0.2)
+            avg_acc =  np.sum(labels_pred == labels_expected) /(len(labels_expected))
+#             avg_acc_val = acc_val / (dataset_sizes[TRAIN]*0.2)
 
             print( file = log)
             print("Epoch {} result: ".format(epoch), file = log)
@@ -483,7 +551,7 @@ def train_model(log, vgg, criterion, optimizer, scheduler, dataloaders, num_epoc
             if avg_acc_val > best_acc:
                 best_acc = avg_acc_val
                 best_model_wts = copy.deepcopy(vgg.state_dict())
-        break
+        
     elapsed_time = time.time() - since
     print(file = log)
     print("Training completed in {:.0f}m {:.0f}s".format(elapsed_time // 60, elapsed_time % 60), file = log)
@@ -496,7 +564,7 @@ def train_model(log, vgg, criterion, optimizer, scheduler, dataloaders, num_epoc
 # ## Evaluating Model
 # In this step, images from validation is chosen and is used for evaluating the trained model.
 
-# In[ ]:
+# In[21]:
 
 
 def eval_model(log, vgg, criterion, label_smoothing = False):
@@ -509,12 +577,15 @@ def eval_model(log, vgg, criterion, label_smoothing = False):
     test_batches = len(dataloaders[TEST])
     print("Evaluating model")
     print('-' * 10)
-    
+    labels_pred = []
+    labels_expected = []
+    labels_pred = np.array(labels_pred)
+    labels_expected = np.array(labels_expected)
     for i, data in enumerate(dataloaders[TEST]):
         if i % 100 == 0:
             print("\rTest batch {}/{}".format(i, test_batches), file=log)
-#         if i >= 1:
-#             break
+        if i >= 50:
+            break
         vgg.train(False)
         vgg.eval()
         inputs, labels = data
@@ -528,96 +599,125 @@ def eval_model(log, vgg, criterion, label_smoothing = False):
 
         _, preds = torch.max(outputs.data, 1)
 #         loss = criterion(outputs, labels, smoothing=label_smoothing)
-        loss = criterion(outputs, labels)
+#         loss = criterion(outputs, labels)
+
+        if label_smoothing:
+            loss = criterion(outputs, labels, True)                
+        else:
+            loss = criterion(outputs, labels)
 #         loss_test += loss.data[0]
         loss_test += loss.item()
 
         acc_test += torch.sum(preds == labels.data)
 
+        if use_gpu:
+            labels_pred = np.concatenate((labels_pred, preds.cpu()))
+            labels_expected = np.concatenate((labels_expected, labels.cpu()))
+        else:
+            labels_pred = np.concatenate((labels_pred, preds))
+            labels_expected = np.concatenate((labels_expected, labels))
+
         del inputs, labels, outputs, preds
         torch.cuda.empty_cache()
-        
+    print("Expected label shape",labels_expected.shape)    
+    print("Predicted label shape",labels_pred.shape)    
     avg_loss = loss_test / dataset_sizes[TEST]
-    avg_acc = acc_test / dataset_sizes[TEST]
-    
+    avg_acc = np.sum(labels_pred == labels_expected) / len(labels_expected)
+        
     elapsed_time = time.time() - since
     print(file = log)
     print("Evaluation completed in {:.0f}m {:.0f}s".format(elapsed_time // 60, elapsed_time % 60), file = log)
     print("Avg loss (test): {:.4f}".format(avg_loss), file = log)
     print("Avg acc (test): {:.4f}".format(avg_acc), file = log)
     print('-' * 10, file = log)
+    
+    print("Confusion Matrix", file=log)
+    print(confusion_matrix(labels_expected, labels_pred), file=log)  
+    print("-"*30, file=log)
+#         print("Classification Report")
+#         print(classification_report(y_label,out_predict))
+        
+    print("List of classification Accuracy", file=log)
+    data = Counter(labels_expected[labels_expected==labels_pred])
+    stat = data.most_common()
+    stat = np.array(stat)
+    print(stat, file=log)   # Returns all unique items and their counts
+
+    print(" The best classification accuracy is: ", 
+          stat[0,1]/np.sum(labels_expected[labels_expected==stat[0,1]]), file=log)
+    print(" The worst classification accuracy is: ", 
+          stat[-1,1]/np.sum(labels_expected[labels_expected==stat[-1,1]]), file=log)
+
+    
 
 
-# In[ ]:
+# In[10]:
 
 
-lr_=0.05
+lr_=0.001
 momentum_=0.9
-def set_up_network_param(net_type ='vgg16', freeze_training = False, clip_classifier = False, classification_size=10):
+def set_up_network_param(net_type ='vgg16', freeze_training = False, clip_classifier = False, classification_size=10, label_smoothing = False):
     net = set_up_network(net_type, freeze_training = False, clip_classifier = False, classification_size=10)
     if use_gpu:
         net.cuda() #.cuda() will move everything to the GPU side
 #     criterion = cal_loss
-    criterion = nn.CrossEntropyLoss()
+    if label_smoothing:
+        criterion = cal_loss                
+    else:
+        criterion = nn.CrossEntropyLoss()
     optimizer_ft = optim.SGD(net.parameters(), lr=lr_, momentum=momentum_)
     exp_lr_scheduler = lr_scheduler.StepLR(optimizer_ft, step_size=7, gamma=0.1)
     return net, criterion, optimizer_ft, exp_lr_scheduler
 
 
-# ## Transfer learning and evaluating VGG model
-
-# In[ ]:
+# In[11]:
 
 
-# # data_dir_10 = "/home/student/meowth/imgClas/food/class10"  
-# # data_dir_30 = "/home/student/meowth/imgClas/food/class30"
-# # data_dir_100 = "/home/student/meowth/imgClas/food/class100"
-# data_dir_10 = "C:\DeepLearning\images\class10"  
-# data_dir_30 = "C:\DeepLearning\images\class10"
-# data_dir_100 = "C:\DeepLearning\images\class10"
-# ImageDirectory = [data_dir_10 ]
+# This file is common for both VGG and Alexnet
 
-# TRAIN = 'train'
-# TEST = 'test'
+data_dir_10G1 = "/home/student/meowth/imgClas/food/class10"  
+data_dir_10G2 = "/home/student/meowth/imgClas/food/group_2_10"  
+data_dir_10G3 = "/home/student/meowth/imgClas/food/group_3_10"  
+data_dir_10G4 = "/home/student/meowth/imgClas/food/group_4_10"  
+data_dir_10G5 = "/home/student/meowth/imgClas/food/group_5_10"  
 
-# Epochs = 1
-# for i, data_dir in enumerate(ImageDirectory):
-#     file = open("VGG16_Task2"+str(i)+".txt", "w")
-#     # Get Data
-#     dataloaders, image_datasets = data_loader(file, data_dir, TRAIN, TEST, image_crop_size = 224, mini_batch_size = 10 )
-#     dataset_sizes, classification_size = update_details(file, image_datasets)
-    
-#     # Set up the network
-#     vgg16, criterion, optimizer_ft, exp_lr_scheduler = set_up_network_param('vgg16', 
-#                          freeze_training = False, 
-#                          clip_classifier = False, 
-#                          classification_size=classification_size)
+data_dir_30G1 = "/home/student/meowth/imgClas/food/class30"
+data_dir_30G2 = "/home/student/meowth/imgClas/food/group_2_30"
+data_dir_30G3 = "/home/student/meowth/imgClas/food/group_3_30"
+data_dir_30G4 = "/home/student/meowth/imgClas/food/group_4_30"
+data_dir_30G5 = "/home/student/meowth/imgClas/food/group_5_30"
 
-#     # training the model
-#     vgg16 = train_model(file, vgg16, criterion, optimizer_ft, exp_lr_scheduler, dataloaders, num_epochs=Epochs)
-    
-#     # Testing the model
-#     print("Testing the trained model", file = file)
-#     eval_model(file, vgg16, criterion)
-    
-#     # Save the trained Model
-#     torch.save(vgg16.state_dict(), "VGG16_v1_task2_size_"+str(classification_size)+".pt")
-#     del vgg16, criterion, optimizer_ft, exp_lr_scheduler, dataloaders, image_datasets
-#     file.close()
+# data_dir_10G1 = "/home/student/meowth/imgClas/food/class10"  
+# data_dir_30G1 = "/home/student/meowth/imgClas/food/class30"
+# data_dir_100 = "/home/student/meowth/imgClas/food/class100"
+# ImageDirectory = [data_dir_10G1, data_dir_30G1, data_dir_100]
+ImageDirectory = [data_dir_10G1, data_dir_30G1,
+                  data_dir_10G2, data_dir_30G2,
+                  data_dir_10G3, data_dir_30G3,
+                  data_dir_10G4, data_dir_30G4,
+                  data_dir_10G5, data_dir_30G5]
+
+data_dir_10 = "C:\DeepLearning\images\class10"  
+data_dir_30 = "C:\DeepLearning\images\class10"
+data_dir_100 = "C:\DeepLearning\images\class10"
+ImageDirectory = [data_dir_10]
+
+TRAIN = 'train'
+TEST = 'test'
 
 
 # ## Training and evaluating AlexNet
 
-# In[ ]:
+# In[32]:
 
 
-# Epochs = 1
+# Epochs = 5
 
 # for i, data_dir in enumerate(ImageDirectory):
-#     file = open("AlexNet_Task2"+str(i)+".txt", "w")
+#     file = open("AlexNet_Task2"+str(i)+"_final.txt", "w")
 #     # Get Data
-#     dataloaders, image_datasets = data_loader(file, data_dir, TRAIN, TEST, image_crop_size = 224, mini_batch_size = 10 )
-#     dataset_sizes, classification_size = update_details(file, image_datasets)
+#     dataloaders, image_datasets = data_loader(file, data_dir, TRAIN, TEST, image_crop_size = 224, mini_batch_size = 20 )
+#     dataset_sizes, classification_size, class_names  = update_details(file, image_datasets)
     
 #     # Set up the network
 #     alexnet, criterion, optimizer_ft, exp_lr_scheduler = set_up_network_param('alexnet', 
@@ -638,28 +738,96 @@ def set_up_network_param(net_type ='vgg16', freeze_training = False, clip_classi
 #     file.close()
 
 
-# ## Task 3: Using label smoothing regularisation
-# The loss function is updated to include smoothing and is as shown here.
-
-# ## VGG16 with label smoothing
+# ## Transfer learning and evaluating VGG model
 
 # In[ ]:
 
 
-# Epochs = 10
 
+# Epochs = 5
 # for i, data_dir in enumerate(ImageDirectory):
-#     file = open("VGG16_Task3"+str(i)+".txt", "w")
-
+#     file = open("VGG16_Task2"+str(i)+".txt", "w")
 #     # Get Data
-#     dataloaders, image_datasets = data_loader(file, data_dir, TRAIN, TEST, image_crop_size = 224, mini_batch_size = 10 )
-#     dataset_sizes, classification_size = update_details(file, image_datasets)
+#     dataloaders, image_datasets = data_loader(file, data_dir, TRAIN, TEST, image_crop_size = 224, mini_batch_size = 20 )
+#     dataset_sizes, classification_size, class_names = update_details(file, image_datasets)
     
 #     # Set up the network
 #     vgg16, criterion, optimizer_ft, exp_lr_scheduler = set_up_network_param('vgg16', 
 #                          freeze_training = False, 
 #                          clip_classifier = False, 
 #                          classification_size=classification_size)
+
+#     # training the model
+#     vgg16 = train_model(file, vgg16, criterion, optimizer_ft, exp_lr_scheduler, dataloaders, num_epochs=Epochs)
+    
+#     # Testing the model
+#     print("Testing the trained model", file = file)
+#     eval_model(file, vgg16, criterion)
+    
+#     # Save the trained Model
+#     torch.save(vgg16.state_dict(), "VGG16_v1_task2_size_"+str(classification_size)+".pt")
+#     del vgg16, criterion, optimizer_ft, exp_lr_scheduler, dataloaders, image_datasets
+#     file.close()
+
+
+# ## Task 3: Using label smoothing regularisation
+# The loss function is updated to include smoothing and is as shown here.
+
+# ## AlexNet with label smoothing
+
+# In[33]:
+
+
+# Epochs = 4
+
+# for i, data_dir in enumerate(ImageDirectory):
+#     file = open("AlexNet_Task3"+str(i)+"_final.txt", "w")
+#     # Get Data
+#     dataloaders, image_datasets = data_loader(file, data_dir, TRAIN, TEST, image_crop_size = 224, mini_batch_size = 20 )
+#     dataset_sizes, classification_size, class_names = update_details(file, image_datasets)
+    
+#     # Set up the network
+#     alexnet, criterion, optimizer_ft, exp_lr_scheduler = set_up_network_param('alexnet', 
+#                          freeze_training = False, 
+#                          clip_classifier = False, 
+#                          classification_size=classification_size,
+#                          label_smoothing = True )
+#     # training the model
+#     alexnet = train_model(file, alexnet, criterion, 
+#                           optimizer_ft, exp_lr_scheduler,
+#                           dataloaders, num_epochs=Epochs,
+#                          label_smoothing = True)
+    
+#     # Testing the model
+#     print("Testing the trained model", file = file)
+#     eval_model(file, alexnet, criterion, label_smoothing = True)
+    
+#     # Save the trained Model
+#     torch.save(alexnet.state_dict(), "ALEXNET_v1_task3_size_"+str(classification_size)+".pt")
+#     del alexnet, criterion, optimizer_ft, exp_lr_scheduler, dataloaders, image_datasets
+#     file.close()
+
+
+# ## VGG16 with label smoothing
+
+# In[18]:
+
+
+# Epochs = 4
+
+# for i, data_dir in enumerate(ImageDirectory):
+#     file = open("VGG16_Task3"+str(i)+"_final.txt", "w")
+
+#     # Get Data
+#     dataloaders, image_datasets = data_loader(file, data_dir, TRAIN, TEST, image_crop_size = 224, mini_batch_size = 20 )
+#     dataset_sizes, classification_size, class_names = update_details(file, image_datasets)
+    
+#     # Set up the network
+#     vgg16, criterion, optimizer_ft, exp_lr_scheduler = set_up_network_param('vgg16', 
+#                          freeze_training = False, 
+#                          clip_classifier = False, 
+#                          classification_size=classification_size,
+#                          label_smoothing = True )
 
 #     # training the model
 #     vgg16 = train_model(file, vgg16, 
@@ -674,40 +842,5 @@ def set_up_network_param(net_type ='vgg16', freeze_training = False, clip_classi
 #     # Save the trained Model
 #     torch.save(vgg16.state_dict(), "VGG16_v1_task3_size_"+str(classification_size)+".pt")
 #     del vgg16, criterion, optimizer_ft, exp_lr_scheduler, dataloaders, image_datasets
-#     file.close()
-
-
-# ## AlexNet with label smoothing
-
-# In[ ]:
-
-
-# Epochs = 10
-
-# for i, data_dir in enumerate(ImageDirectory):
-#     file = open("AlexNet_Task3"+str(i)+".txt", "w")
-#     # Get Data
-#     dataloaders, image_datasets = data_loader(file, data_dir, TRAIN, TEST, image_crop_size = 224, mini_batch_size = 10 )
-#     dataset_sizes, classification_size = update_details(file, image_datasets)
-    
-#     # Set up the network
-#     alexnet, criterion, optimizer_ft, exp_lr_scheduler = set_up_network_param('alexnet', 
-#                          freeze_training = False, 
-#                          clip_classifier = False, 
-#                          classification_size=classification_size)
-
-#     # training the model
-#     alexnet = train_model(file, alexnet, criterion, 
-#                           optimizer_ft, exp_lr_scheduler,
-#                           dataloaders, num_epochs=Epochs,
-#                          label_smoothing = True)
-    
-#     # Testing the model
-#     print("Testing the trained model", file = file)
-#     eval_model(file, alexnet, criterion, label_smoothing = True)
-    
-#     # Save the trained Model
-#     torch.save(alexnet.state_dict(), "ALEXNET_v1_task3_size_"+str(classification_size)+".pt")
-#     del alexnet, criterion, optimizer_ft, exp_lr_scheduler, dataloaders, image_datasets
 #     file.close()
 
