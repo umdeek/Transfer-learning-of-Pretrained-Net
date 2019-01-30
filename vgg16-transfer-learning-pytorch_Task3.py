@@ -246,7 +246,7 @@ def fit_features_to_SVM_new( log,features, labels, train_batch_size, K=5  ):
     return np.mean(scores), np.std(scores)
 
 
-# In[ ]:
+# In[25]:
 
 
 ## This part is common for both VGG and Alexnet
@@ -340,7 +340,7 @@ TEST = 'test'
 # ## Loss function
 # Here, based on whether label smoothing is needed or not, a different loss function is selected.
 
-# In[6]:
+# In[26]:
 
 
 def cal_loss(pred, gold, smoothing = False):
@@ -368,7 +368,7 @@ def cal_loss(pred, gold, smoothing = False):
 # Here, a split of 80% for training and 20% for validation is done for cross validation. It otherwise follows the standard training example given in pytorch site.
 # 
 
-# In[20]:
+# In[27]:
 
 
 def train_model(log, vgg, criterion, optimizer, scheduler, dataloaders, num_epochs=10, label_smoothing = False):
@@ -415,7 +415,7 @@ def train_model(log, vgg, criterion, optimizer, scheduler, dataloaders, num_epoc
                     print("\rTraining batch {}/{}".format(i, train_batches / 2), end='')
 
                 # Use half training dataset
-                if i >= train_batches/5:
+                if i >= train_batches/4:
 #                 if i >= 1:
                     break
                 
@@ -532,7 +532,7 @@ def train_model(log, vgg, criterion, optimizer, scheduler, dataloaders, num_epoc
 # ## Evaluating Model
 # In this step, images from validation is chosen and is used for evaluating the trained model.
 
-# In[10]:
+# In[28]:
 
 
 def eval_model(log, vgg, criterion, label_smoothing = False):
@@ -618,7 +618,7 @@ def eval_model(log, vgg, criterion, label_smoothing = False):
     
 
 
-# In[17]:
+# In[29]:
 
 
 lr_=0.001
@@ -637,7 +637,7 @@ def set_up_network_param(net_type ='vgg16', freeze_training = False, clip_classi
     return net, criterion, optimizer_ft, exp_lr_scheduler
 
 
-# In[14]:
+# In[32]:
 
 
 # This file is common for both VGG and Alexnet
@@ -683,7 +683,7 @@ TEST = 'test'
 # for i, data_dir in enumerate(ImageDirectory):
 #     file = open("AlexNet_Task2"+str(i)+"_final.txt", "w")
 #     # Get Data
-#     dataloaders, image_datasets = data_loader(file, data_dir, TRAIN, TEST, image_crop_size = 224, mini_batch_size = 30 )
+#     dataloaders, image_datasets = data_loader(file, data_dir, TRAIN, TEST, image_crop_size = 224, mini_batch_size = 20 )
 #     dataset_sizes, classification_size, class_names  = update_details(file, image_datasets)
     
 #     # Set up the network
@@ -715,7 +715,7 @@ TEST = 'test'
 # for i, data_dir in enumerate(ImageDirectory):
 #     file = open("VGG16_Task2"+str(i)+".txt", "w")
 #     # Get Data
-#     dataloaders, image_datasets = data_loader(file, data_dir, TRAIN, TEST, image_crop_size = 224, mini_batch_size = 30 )
+#     dataloaders, image_datasets = data_loader(file, data_dir, TRAIN, TEST, image_crop_size = 224, mini_batch_size = 20 )
 #     dataset_sizes, classification_size, class_names = update_details(file, image_datasets)
     
 #     # Set up the network
@@ -742,15 +742,15 @@ TEST = 'test'
 
 # ## AlexNet with label smoothing
 
-# In[19]:
+# In[33]:
 
 
-Epochs = 10
+Epochs = 1
 
 for i, data_dir in enumerate(ImageDirectory):
     file = open("AlexNet_Task3"+str(i)+"_final.txt", "w")
     # Get Data
-    dataloaders, image_datasets = data_loader(file, data_dir, TRAIN, TEST, image_crop_size = 224, mini_batch_size = 30 )
+    dataloaders, image_datasets = data_loader(file, data_dir, TRAIN, TEST, image_crop_size = 224, mini_batch_size = 20 )
     dataset_sizes, classification_size, class_names = update_details(file, image_datasets)
     
     # Set up the network
@@ -780,13 +780,13 @@ for i, data_dir in enumerate(ImageDirectory):
 # In[18]:
 
 
-Epochs = 10
+Epochs = 1
 
 for i, data_dir in enumerate(ImageDirectory):
     file = open("VGG16_Task3"+str(i)+"_final.txt", "w")
 
     # Get Data
-    dataloaders, image_datasets = data_loader(file, data_dir, TRAIN, TEST, image_crop_size = 224, mini_batch_size = 30 )
+    dataloaders, image_datasets = data_loader(file, data_dir, TRAIN, TEST, image_crop_size = 224, mini_batch_size = 20 )
     dataset_sizes, classification_size, class_names = update_details(file, image_datasets)
     
     # Set up the network
