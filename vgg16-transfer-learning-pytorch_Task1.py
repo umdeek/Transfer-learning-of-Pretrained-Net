@@ -246,8 +246,8 @@ def fit_features_to_SVM_new( log,features, labels, train_batch_size, K=5  ):
 
 
 ## This part is common for both VGG and Alexnet
-data_dir_10 = "/home/student/meowth/imgClas/food/class10"  
-data_dir_30 = "/home/student/meowth/imgClas/food/class30"
+data_dir_10 = "/home/student/ekans/ProjectClass/class10"  
+data_dir_30 = "/home/student/ekans/ProjectClass/class30"
 # data_dir_10 = "C:\DeepLearning\images\class10"  
 # data_dir_30 = "C:\DeepLearning\images\class10"
 ImageDirectory = [data_dir_10, data_dir_30]
@@ -277,7 +277,7 @@ for i, data_dir in enumerate(ImageDirectory):
     # Update train_batch_size
     train_batch_size = dataset_sizes[TRAIN]
 #     train_batch_size = 50
-#     class_size = classification_size
+    class_size = classification_size
     
     # Get the image features for the imagenet trained network.
     print("Getting features")
@@ -316,7 +316,7 @@ for i, data_dir in enumerate(ImageDirectory):
     # Update train_batch_size
     train_batch_size = dataset_sizes[TRAIN]
 #     train_batch_size = 100
-#     class_size = classification_size
+    class_size = classification_size
     
     # Get the image features for the imagenet trained network.
     imgfeatures_alexn, imglabels_alexn = get_features(file, alex_net_nc, train_batch_size,

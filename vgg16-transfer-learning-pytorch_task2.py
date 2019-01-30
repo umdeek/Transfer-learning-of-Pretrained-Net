@@ -434,8 +434,8 @@ def train_model(log, vgg, criterion, optimizer, scheduler, dataloaders, num_epoc
 
                 loss.backward()
                 optimizer.step()
-#                 loss_train += loss.item()
-                loss_train += loss.data[0]
+                loss_train += loss.item()
+#                loss_train += loss.data[0]
                 acc_train += torch.sum(preds == labels.data)
 
                 del inputs, labels, outputs, preds
@@ -471,8 +471,8 @@ def train_model(log, vgg, criterion, optimizer, scheduler, dataloaders, num_epoc
                 _, preds = torch.max(outputs.data, 1)
                 loss = criterion(outputs, labels)
 
-                loss_val += loss.data[0]
-#                 loss_train += loss.item()
+#                loss_val += loss.data[0]
+                loss_train += loss.item()
                 acc_val += torch.sum(preds == labels.data)
 
                 del inputs, labels, outputs, preds
