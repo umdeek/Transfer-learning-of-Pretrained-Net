@@ -678,7 +678,7 @@ TEST = 'test'
 # In[ ]:
 
 
-Epochs = 10
+Epochs = 3
 
 for i, data_dir in enumerate(ImageDirectory):
     file = open("AlexNet_Task2"+str(i)+"_final.txt", "w")
@@ -711,7 +711,7 @@ for i, data_dir in enumerate(ImageDirectory):
 
 
 
-Epochs = 10
+Epochs = 3
 for i, data_dir in enumerate(ImageDirectory):
     file = open("VGG16_Task2"+str(i)+".txt", "w")
     # Get Data
@@ -745,7 +745,7 @@ for i, data_dir in enumerate(ImageDirectory):
 # In[33]:
 
 
-# Epochs = 1
+# Epochs = 3
 
 # for i, data_dir in enumerate(ImageDirectory):
 #     file = open("AlexNet_Task3"+str(i)+"_final.txt", "w")
@@ -780,7 +780,7 @@ for i, data_dir in enumerate(ImageDirectory):
 # In[18]:
 
 
-# Epochs = 1
+# Epochs = 3
 
 # for i, data_dir in enumerate(ImageDirectory):
 #     file = open("VGG16_Task3"+str(i)+"_final.txt", "w")
