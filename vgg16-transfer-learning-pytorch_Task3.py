@@ -641,10 +641,10 @@ def set_up_network_param(net_type ='vgg16', freeze_training = False, clip_classi
 
 # This file is common for both VGG and Alexnet
 
-# data_dir_10 = "/home/student/meowth/imgClas/food/class10"  
-# data_dir_30 = "/home/student/meowth/imgClas/food/class30"
+data_dir_10 = "/home/student/meowth/imgClas/food/class10"  
+data_dir_30 = "/home/student/meowth/imgClas/food/class30"
 # data_dir_100 = "/home/student/meowth/imgClas/food/class100"
-# ImageDirectory = [data_dir_10, data_dir_30, data_dir_100 ]
+ImageDirectory = [data_dir_10, data_dir_30]
 
 data_dir_10 = "C:\DeepLearning\images\class10"  
 # data_dir_30 = "C:\DeepLearning\images\class10"
